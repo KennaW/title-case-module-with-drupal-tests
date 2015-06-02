@@ -1,0 +1,73 @@
+<?php
+function title_case_menu(){
+    $items = array();
+    $items['title_case'] = array(
+        'title' => 'Title Case',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('title_case_form'),
+        'access callback' => TRUE,
+        'type' => MENU_NORMAL_ITEM,
+    );
+    $items['title_success'] = array(
+        'title' => "Title Case Success",
+        'page callback' => "title_case_success",
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+    );
+    return $items;
+}
+
+function title_case_form() {
+    //hey drupal we need a form field called 'convert_case'
+    $form['convert_case'] = array(
+        '#title' => 'Convert your cases',
+        '#type' => 'textfield',
+        '#description' => t('please enter the title you want translated into title case'),
+    );
+
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => 'Go',
+    );
+    return $form;
+}
+    function make_title_case($title)   {
+        $exceptions = ["a", "an", "the", "is", "or", "to", "and", "but", "for", "nor", "on", "of"];
+        $split = explode(" ", $title);
+        $words = array();
+
+        foreach ($split as $i=>$value) {
+
+            $lowercase = strtolower($value);
+            if(in_array($lowercase, $exceptions) && $i != 0){
+                $noun = $lowercase;
+            }
+            else{
+                $noun = ucfirst($lowercase);
+            }
+            array_push($words, $noun);
+        }
+        $output = implode(" ", $words);
+        return $output;
+    }
+
+    function title_case_form_submit($form, &$form_state) {
+        //hey drupal, remember when we set up the form in title_case_form?
+        //get me the value of that one field called 'convert_case'
+        $title = $form_state['values']['convert_case'];
+
+        //put the tile into the function and store the result in the variable $output.
+        $output = make_title_case($title);
+
+        //store that $output for later to be used on a different page
+        //by creating a new key-value pair in the session array.
+        $_SESSION['store_for_later'] = $output;
+
+        //now that we're done running our code on hook_form_submit, redirect user to /title_success.
+        $form_state['redirect'] = 'title_success';
+    }
+
+    function title_case_success($input) {
+        $result = $_SESSION['store_for_later'];
+        return $result;
+    }
